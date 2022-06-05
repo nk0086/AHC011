@@ -48,29 +48,35 @@ fn main() {
     let sim = Sim::new(&TILE_Input);
     let (mut score, _, _) = sim.compute_score(&TILE_Input);
 
-    let mut result = (String::new(), 0);
-    let mut answer = String::new();
+    let mut result = (String::new(), score);
     let movement = ['R', 'D', 'L', 'U'];
-    //let mut score = 0;
     let d = [(0, 1), (1, 0), (0, -1), (-1, 0)];
 
-    let mut count = 0;
-    while count < T {
+    loop {
         let time = Instant::now();
         if time.duration_since(start).as_secs_f64() > 2.9 {
             break;
         }
 
-        let temp = rand::thread_rng().gen_range(0, 101);
-        let next_point = rand::thread_rng().gen_range(0, 4);
-        let dij = d[next_point];
-        if solve(n, &mut vacancy, dij, &mut TILE, T, temp, &mut score) {
+        let mut answer = String::new();
+        let mut count = 0;
+        let mut tmp_tile = TILE.clone();
+        let mut tmp_vacancy = vacancy.clone();
+        while count < T {
+            let temp = rand::thread_rng().gen_range(0, 101);
+            let next_point = rand::thread_rng().gen_range(0, 4);
+            let dij = d[next_point];
+
+            if !solve(n, &mut tmp_vacancy, dij, &mut tmp_tile, T, temp, &mut score) {
+                continue;
+            }
             answer.push(movement[next_point]);
             count += 1;
-        }
 
-        if result.1 < score {
-            result = (answer.clone(), score);
+            if result.1 < score {
+                result = (answer.clone(), score);
+                //println!("{:#?}", result);
+            }
         }
     }
 
@@ -91,8 +97,10 @@ fn solve(
         return false;
     }
 
-    tile[vacancy.0 as usize][vacancy.1 as usize] = tile[slide.0 as usize][slide.1 as usize];
-    tile[slide.0 as usize][slide.1 as usize] = 0;
+    swap_tile(tile, slide, *vacancy);
+
+    //tile[vacancy.0 as usize][vacancy.1 as usize] = tile[slide.0 as usize][slide.1 as usize];
+    //tile[slide.0 as usize][slide.1 as usize] = 0;
 
     let TILE = Input {
         n: n,
@@ -102,16 +110,24 @@ fn solve(
 
     let sim = Sim::new(&TILE);
     let (next_score, _, _) = sim.compute_score(&TILE);
-    if next_score < *score && temp < 90 {
-        tile[slide.0 as usize][slide.1 as usize] = tile[vacancy.0 as usize][vacancy.1 as usize];
-        tile[vacancy.0 as usize][vacancy.1 as usize] = 0;
-        return false;
+    if next_score < *score {
+        if temp < 90 {
+            swap_tile(tile, *vacancy, slide);
+            //tile[slide.0 as usize][slide.1 as usize] = tile[vacancy.0 as usize][vacancy.1 as usize];
+            //tile[vacancy.0 as usize][vacancy.1 as usize] = 0;
+            return false;
+        }
     }
     vacancy.0 += d.0;
     vacancy.1 += d.1;
     *score = next_score;
 
     true
+}
+
+fn swap_tile(tile: &mut Vec<Vec<usize>>, slide: (i64, i64), vacancy: (i64, i64)) {
+    tile[vacancy.0 as usize][vacancy.1 as usize] = tile[slide.0 as usize][slide.1 as usize];
+    tile[slide.0 as usize][slide.1 as usize] = 0;
 }
 
 pub trait SetMinMax {
