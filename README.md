@@ -16,4 +16,4 @@
 
 - 上記の方針でスコアの高いものを保持
 
-[gif](https://github.com/nk0086/AHC011/vis.gif)
+![gif](https://github.com/nk0086/AHC011/blob/main/vis.gif)
